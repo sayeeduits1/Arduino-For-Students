@@ -1,0 +1,92 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Keypad.h>
+
+// Initialize I2C LCD
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Pin for the LED load
+int ledPin = 10;  // Change this to the correct pin where your LED is connected
+
+// Define keypad rows and columns
+const byte ROWS = 4;  // four rows
+const byte COLS = 3;  // three columns
+
+// Define the keymap for the 4x3 keypad
+char keys[ROWS][COLS] = {
+  {'1','2','3'},
+  {'4','5','6'},
+  {'7','8','9'},
+  {'*','0','#'}
+};
+
+// Define keypad connections to Arduino
+byte rowPins[ROWS] = {9, 8, 7, 6};  // Connect to the row pinouts of the keypad
+byte colPins[COLS] = {5, 4, 3};     // Connect to the column pinouts of the keypad
+
+// Create keypad instance
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+
+// Variables to store user input
+String inputCode = "";
+String defaultCode = "1234";  // Default passcode
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin();
+  lcd.backlight();
+  
+  // Set LED pin as output
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);  // Keep LED off initially
+  
+  // Display initial message
+  lcd.setCursor(0, 0);
+  lcd.print("Enter Code:");
+  lcd.setCursor(0, 1);
+}
+
+void loop() {
+  char key = keypad.getKey();
+  
+  if (key) {
+    // If a key is pressed, show * on the LCD and store the input
+    inputCode += key;
+    lcd.print("*");
+    
+    // If the code length is 4, check the input
+    if (inputCode.length() == 4) {
+      delay(500);  // Give time to see the last entered digit
+      lcd.clear();
+      
+      if (inputCode == defaultCode) {
+        lcd.setCursor(0, 0);
+        lcd.print("Access Granted");
+        openDoor();  // Light up the LED for 5 seconds
+      } else {
+        lcd.setCursor(0, 0);
+        lcd.print("Access Denied");
+        delay(2000);  // Display error message for 2 seconds
+      }
+      
+      // Reset the input code for the next attempt
+      inputCode = "";
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Enter Code:");
+    }
+  }
+}
+
+// Function to turn on the LED (simulate unlocking the door)
+void openDoor() {
+  digitalWrite(ledPin, HIGH);  // Turn on LED
+  delay(5000);                 // Keep the LED on for 5 seconds
+  digitalWrite(ledPin, LOW);   // Turn off LED
+  lcd.setCursor(0, 1);
+  lcd.print("Door Locked");
+  delay(1000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Enter Code:");
+}

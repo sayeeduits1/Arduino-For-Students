@@ -1,0 +1,52 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Initialize the LCD (Set the correct I2C address, usually 0x27 or 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2); // 16 columns and 2 rows
+
+// Define pins for the Ultrasonic Sensor
+const int trigPin = 9;  // Trigger pin of the ultrasonic sensor
+const int echoPin = 10; // Echo pin of the ultrasonic sensor
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin();
+  lcd.backlight();  // Turn on the backlight
+  
+  // Set the trigPin as output and echoPin as input
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+  // Display a welcome message on the LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Distance Measure");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // Clear the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  
+  // Send a 10us pulse to trigger the measurement
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  // Read the echoPin and calculate the duration of the pulse
+  long duration = pulseIn(echoPin, HIGH);
+  
+  // Calculate the distance in inches
+  float distanceInches = duration * 0.0133 / 2;  // Speed of sound is ~1130 ft/sec (1 inch = 0.0133 ms)
+  
+  // Display the distance on the LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Distance:");
+  lcd.setCursor(0, 1);
+  lcd.print(distanceInches);
+  lcd.print(" in   ");
+  
+  // Small delay before next reading
+  delay(500);
+}
