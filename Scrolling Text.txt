@@ -1,0 +1,45 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Set the LCD address to 0x27 for a 16x2 display (it could also be 0x3F)
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // 16 columns, 2 rows
+
+// The message to scroll
+String message = "Bangladesh Polytechnic Institute";
+
+void setup() {
+  // Initialize the LCD
+  lcd.begin();
+  lcd.backlight();  // Turn on the LCD backlight
+  
+  // Display a welcome message before scrolling
+  lcd.setCursor(0, 0);  
+  lcd.print("Starting Scroll");
+  delay(2000);  // Show the welcome message for 2 seconds
+  lcd.clear();  // Clear the display
+}
+
+void loop() {
+  // Scroll the text from right to left
+  for (int i = 0; i < message.length(); i++) {
+    lcd.clear();
+    
+    // Set cursor to the beginning
+    lcd.setCursor(16 - i, 0);  // Adjust based on how far the text has scrolled
+    
+    // Print part of the string that fits on the screen
+    lcd.print(message.substring(i)); 
+    
+    // Delay between each scroll step
+    delay(300);
+    
+    // Optionally display the rest of the message if it overflows the screen width
+    if (i >= 16) {
+      lcd.setCursor(0, 1);  // Move to the second row for longer messages
+      lcd.print(message.substring(i - 16));
+    }
+  }
+
+  // Reset the scroll after finishing
+  delay(2000);  // Delay before restarting the scrolling
+}
