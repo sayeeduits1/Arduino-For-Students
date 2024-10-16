@@ -1,0 +1,63 @@
+#include <SPI.h>
+#include <MFRC522.h>
+
+#define RST_PIN D1   // Reset pin for MFRC522
+#define SS_PIN D2    // Slave select pin for MFRC522
+#define LED_PIN LED_BUILTIN  // Built-in LED on NodeMCU
+
+MFRC522 rfid(SS_PIN, RST_PIN);  // Create instance of MFRC522
+
+// Define the target RFID UID (43 9F 9E 08) to compare
+byte targetUID[] = { 0x43, 0x9F, 0x9E, 0x08 };
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(115200);
+  while (!Serial);  // Wait for serial connection
+  Serial.println("Place your RFID card near the reader...");
+
+  // Initialize SPI bus and MFRC522 module
+  SPI.begin();
+  rfid.PCD_Init();  // Initialize MFRC522
+
+  // Set LED pin as output
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);  // Turn off the built-in LED (active LOW)
+}
+
+void loop() {
+  // Check if a new card is present
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    // We have detected a card, now compare its UID with the target UID
+    if (checkUID()) {
+      // If the UID matches, turn on the LED for 1 second
+      Serial.println("Authorized RFID detected! Lighting up LED...");
+      digitalWrite(LED_PIN, LOW);   // Turn on the built-in LED (active LOW)
+      delay(1000);                  // Keep LED on for 1 second
+      digitalWrite(LED_PIN, HIGH);  // Turn off the LED
+    } else {
+      Serial.println("Unauthorized RFID detected.");
+    }
+
+    // Halt the card and stop encryption
+    rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
+  }
+}
+
+// Function to compare the scanned RFID UID with the target UID
+bool checkUID() {
+  // Check if the scanned UID size matches the target UID size
+  if (rfid.uid.size != sizeof(targetUID)) {
+    return false;  // Sizes don't match, return false
+  }
+
+  // Compare each byte of the scanned UID with the target UID
+  for (byte i = 0; i < rfid.uid.size; i++) {
+    if (rfid.uid.uidByte[i] != targetUID[i]) {
+      return false;  // If any byte doesn't match, return false
+    }
+  }
+
+  return true;  // If all bytes match, return true
+}
