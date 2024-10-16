@@ -1,0 +1,38 @@
+#include <SPI.h>
+#include <MFRC522.h>
+
+#define RST_PIN D1   // Reset pin for MFRC522
+#define SS_PIN D2    // Slave select pin for MFRC522
+
+MFRC522 rfid(SS_PIN, RST_PIN);  // Create instance of the MFRC522
+
+void setup() {
+  // Initialize serial communication
+  Serial.begin(115200);
+  while (!Serial);  // Wait for serial connection
+  Serial.println("RFID Reader Ready (NodeMCU)");
+
+  // Initialize SPI bus and MFRC522 module
+  SPI.begin();
+  rfid.PCD_Init();  // Initialize MFRC522
+
+  Serial.println("Place your RFID card near the reader...");
+}
+
+void loop() {
+  // Check if a new card is present
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    // We have detected a card; print its UID (Unique Identifier)
+    Serial.print("RFID UID: ");
+    for (byte i = 0; i < rfid.uid.size; i++) {
+      Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
+      Serial.print(rfid.uid.uidByte[i], HEX);  // Print UID in hexadecimal format
+    }
+    Serial.println();
+
+    // Halt PICC (Passive Integrated Circuit Card) to stop communication until the next card
+    rfid.PICC_HaltA();
+    // Stop encryption on PCD (Proximity Coupling Device)
+    rfid.PCD_StopCrypto1();
+  }
+}
