@@ -1,0 +1,194 @@
+99% of storage used … If you run out, you can't create, edit and upload files. Get 100 GB of storage for BDT 150.00 BDT 0 for 1 month.
+#define BLYNK_TEMPLATE_ID "TMPL6aS0jCZG5"
+#define BLYNK_TEMPLATE_NAME "Water Level Control"
+#define BLYNK_AUTH_TOKEN "r7JkwrsgoO2KQU5w901pnSfljAlvYNPf"
+ 
+#define BLYNK_PRINT Serial
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <AceButton.h>
+char ssid[] = "TP-Link_838D";
+char pass[] = "SaDik231019";
+ 
+int emptyTankDistance = 160;
+int fullTankDistance = 20;
+int triggerPer = 20;
+
+using namespace ace_button;
+ 
+#define TRIG 12                //D6
+#define ECHO 13                //D7
+#define Relay 14           //D5
+#define BP1 2              //D0
+#define BP2 13             //D3
+#define BP3 15             //D4
+ 
+#define V_B_1 V1
+#define V_B_3 V3
+#define V_B_4 V4
+ 
+float duration;
+float distance;
+int waterLevelPer;
+ 
+bool toggleRelay = false;
+bool modeFlag = true;
+String currMode;
+ 
+char auth[] = BLYNK_AUTH_TOKEN;
+ 
+ButtonConfig config1;
+AceButton button1(&config1);
+ButtonConfig config2;
+AceButton button2(&config2);
+ButtonConfig config3;
+AceButton button3(&config3);
+ 
+void handleEvent1(AceButton*, uint8_t, uint8_t);
+void handleEvent2(AceButton*, uint8_t, uint8_t);
+void handleEvent3(AceButton*, uint8_t, uint8_t);
+ 
+BlynkTimer timer;
+ 
+void checkBlynkStatus() {
+  bool isconnected = Blynk.connected();
+  // You can add additional actions here based on connection status
+}
+ 
+BLYNK_WRITE(VPIN_BUTTON_3) {
+  modeFlag = param.asInt();
+  if (!modeFlag && toggleRelay) {
+    digitalWrite(Relay, LOW);
+    toggleRelay = false;
+  }
+  currMode = modeFlag ? "AUTO" : "MANUAL";
+}
+ 
+BLYNK_WRITE(VPIN_BUTTON_4) {
+  if (!modeFlag) {
+    toggleRelay = param.asInt();
+    digitalWrite(Relay, toggleRelay);
+  } else {
+    Blynk.virtualWrite(V_B_4, toggleRelay);
+  }
+}
+ 
+BLYNK_CONNECTED() {
+  Blynk.syncVirtual(V_B_1);
+  Blynk.virtualWrite(V_B_3, modeFlag);
+  Blynk.virtualWrite(V_B_4, toggleRelay);
+}
+ 
+void measureDistance() {
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(20);
+  digitalWrite(TRIG, LOW);
+  duration = pulseIn(ECHO, HIGH);
+  distance = ((duration / 2) * 0.343) / 10;
+
+  if (distance > (fullTankDistance - 15) && distance < emptyTankDistance) {
+    waterLevelPer = map((int)distance, emptyTankDistance, fullTankDistance, 0, 100);
+    Blynk.virtualWrite(V_B_1, waterLevelPer);
+
+    if (waterLevelPer < triggerPer) {
+      if (modeFlag && !toggleRelay) {
+        digitalWrite(Relay, HIGH);
+        toggleRelay = true;
+        Blynk.virtualWrite(V_B_4, toggleRelay);
+      }
+    }
+
+    if (distance < fullTankDistance) {
+      if (modeFlag && toggleRelay) {
+        digitalWrite(Relay, LOW);
+        toggleRelay = false;
+        Blynk.virtualWrite(V_B_4, toggleRelay);
+      }
+    }
+  }
+  delay(100);
+}
+ 
+void setup() {
+  Serial.begin(9600);
+  pinMode(ECHO, INPUT);
+  pinMode(TRIG, OUTPUT);
+  pinMode(Relay, OUTPUT);
+ 
+  pinMode(BP1, INPUT_PULLUP);
+  pinMode(BP2, INPUT_PULLUP);
+  pinMode(BP3, INPUT_PULLUP);
+ 
+  digitalWrite(Relay, HIGH);
+ 
+  config1.setEventHandler(button1Handler);
+  config2.setEventHandler(button2Handler);
+  config3.setEventHandler(button3Handler);
+ 
+  button1.init(BP1);
+  button2.init(BP2);
+  button3.init(BP3);
+ 
+  currMode = modeFlag ? "AUTO" : "MANUAL";
+ 
+  WiFi.begin(ssid, pass);
+  timer.setInterval(2000L, checkBlynkStatus);
+  timer.setInterval(1000L, measureDistance);
+  Blynk.config(auth);
+  delay(1000);
+ 
+  Blynk.virtualWrite(V_B_3, modeFlag);
+  Blynk.virtualWrite(V_B_4, toggleRelay);
+ 
+  delay(500);
+}
+ 
+void loop() {
+  Blynk.run();
+  timer.run();
+  button1.check();
+  button3.check();
+ 
+  if (!modeFlag) {
+    button2.check();
+  }
+}
+ 
+void button1Handler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+  Serial.println("EVENT1");
+  if (eventType == AceButton::kEventReleased) {
+    if (modeFlag && toggleRelay) {
+      digitalWrite(Relay, LOW);
+      toggleRelay = false;
+    }
+    modeFlag = !modeFlag;
+    currMode = modeFlag ? "AUTO" : "MANUAL";
+    Blynk.virtualWrite(V_B_3, modeFlag);
+  }
+}
+ 
+void button2Handler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+  Serial.println("EVENT2");
+  if (eventType == AceButton::kEventReleased) {
+    if (toggleRelay) {
+      digitalWrite(Relay, LOW);
+      toggleRelay = false;
+    } else {
+      digitalWrite(Relay, HIGH);
+      toggleRelay = true;
+    }
+    Blynk.virtualWrite(V_B_4, toggleRelay);
+    delay(1000);
+  }
+}
+ 
+void button3Handler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+  Serial.println("EVENT3");
+  // Add any necessary actions for button 3 here
+}
+
+ 
+
