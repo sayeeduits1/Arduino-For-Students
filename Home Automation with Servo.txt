@@ -1,0 +1,87 @@
+#define BLYNK_TEMPLATE_ID "Your Template ID"
+#define BLYNK_DEVICE_NAME "Your Device Name"
+#define BLYNK_AUTH_TOKEN "Your Auth Token"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <Servo.h> // Include the Servo library
+
+char ssid[] = "Your WiFi SSID";
+char pass[] = "Your WiFi Password";
+
+// LED pin definitions
+#define LED1 D1
+#define LED2 D2
+#define LED3 D3
+#define LED4 D4
+#define SERVO_PIN D5 // Define pin for the servo motor
+
+// Blynk Virtual Pins
+#define VLED1 V1
+#define VLED2 V2
+#define VLED3 V3
+#define VLED4 V4
+#define VSERVO V5 // Define virtual pin for the servo control
+
+BlynkTimer timer;
+Servo myServo; // Create a servo object
+
+void setup() {
+  // Set LED pins as OUTPUT
+  pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
+  pinMode(LED3, OUTPUT);
+  pinMode(LED4, OUTPUT);
+
+  // Initialize LEDs as OFF
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED2, LOW);
+  digitalWrite(LED3, LOW);
+  digitalWrite(LED4, LOW);
+
+  // Attach the servo to the defined pin
+  myServo.attach(SERVO_PIN);
+  myServo.write(0); // Set initial position to 0 degrees
+
+  // Debug console
+  Serial.begin(9600);
+
+  // Connect to Wi-Fi and Blynk
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+}
+
+// LED control from the Blynk app
+BLYNK_WRITE(VLED1) {
+  int pinValue = param.asInt(); // Get the value from Blynk app (1 or 0)
+  digitalWrite(LED1, pinValue); // Set LED1 ON or OFF
+}
+
+BLYNK_WRITE(VLED2) {
+  int pinValue = param.asInt();
+  digitalWrite(LED2, pinValue); // Set LED2 ON or OFF
+}
+
+BLYNK_WRITE(VLED3) {
+  int pinValue = param.asInt();
+  digitalWrite(LED3, pinValue); // Set LED3 ON or OFF
+}
+
+BLYNK_WRITE(VLED4) {
+  int pinValue = param.asInt();
+  digitalWrite(LED4, pinValue); // Set LED4 ON or OFF
+}
+
+// Control the servo motor from the Blynk app
+BLYNK_WRITE(VSERVO) {
+  int servoValue = param.asInt(); // Get the value from Blynk app (1 or 0)
+  if (servoValue == 1) {
+    myServo.write(90); // Move to 90 degrees
+  } else {
+    myServo.write(0); // Move back to 0 degrees
+  }
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
