@@ -1,0 +1,59 @@
+// Define serial communication ports
+#define SIM800L Serial  // Use Serial port to communicate with SIM800L
+
+// Phone number to call
+const char* phone_number = "+8801715772733"; // Change this to the number you want to call
+
+void setup() {
+  // Start the serial communication with Arduino IDE Monitor
+  Serial.begin(9600);
+  SIM800L.begin(9600);  // Start communication with SIM800L at 9600 baud rate
+
+  Serial.println("SIM800L Test Start...");
+
+  // Send an AT command to check if the module is working
+  SIM800L.println("AT");
+
+  // Wait for the response from SIM800L
+  delay(2000);
+
+  // Check if SIM800L responds with "OK"
+  if (SIM800L.available()) {
+    String response = SIM800L.readString();
+    Serial.println("Response from SIM800L: " + response);
+    
+    if (response.indexOf("OK") != -1) {
+      Serial.println("SIM800L is working correctly.");
+      // Now, make the call
+      makeCall(phone_number);
+    } else {
+      Serial.println("SIM800L is not responding properly.");
+    }
+  } else {
+    Serial.println("No response from SIM800L.");
+  }
+}
+
+void loop() {
+  // The loop function is empty because we just want to make a call once in setup
+}
+
+void makeCall(const char* number) {
+  Serial.print("Dialing the number: ");
+  Serial.println(number);
+
+  // Send AT command to make a call
+  SIM800L.print("ATD");
+  SIM800L.print(number);
+  SIM800L.println(";");  // Semicolon is required to initiate the call
+
+  // Wait for the call to connect
+  delay(5000); // Wait for 5 seconds to establish the call
+
+  // To hang up the call after a few seconds, send the command 'ATH'
+  Serial.println("Call initiated. Hanging up the call in 10 seconds...");
+  delay(10000);  // Wait for 10 seconds before hanging up the call
+  SIM800L.println("ATH");  // Hang up the call
+
+  Serial.println("Call ended.");
+}
