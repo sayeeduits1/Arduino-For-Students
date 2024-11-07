@@ -1,0 +1,34 @@
+// Define serial communication ports
+#define SIM800L Serial  // Use Serial port to communicate with SIM800L
+
+void setup() {
+  // Start the serial communication with Arduino IDE Monitor
+  Serial.begin(9600);
+  SIM800L.begin(9600);  // Start communication with SIM800L at 9600 baud rate
+
+  Serial.println("SIM800L Test Start...");
+
+  // Send an AT command to check if the module is working
+  SIM800L.println("AT");
+
+  // Wait for the response
+  delay(2000);
+
+  // Check if the SIM800L module responds with "OK"
+  if (SIM800L.available()) {
+    String response = SIM800L.readString();
+    Serial.println("Response from SIM800L: " + response);
+    
+    if (response.indexOf("OK") != -1) {
+      Serial.println("SIM800L is working correctly.");
+    } else {
+      Serial.println("SIM800L is not responding properly.");
+    }
+  } else {
+    Serial.println("No response from SIM800L.");
+  }
+}
+
+void loop() {
+  // The program does not need to do anything in the loop
+}
