@@ -14,7 +14,7 @@
 const char apn[] = "internet";  // APN for GPRS
 const char user[] = "";         // APN username (if any)
 const char pass[] = "";         // APN password (if any)
-#define API_KEY "AIzaSyCeNCQX-xO73POzYhennoY4HZJXgLWGxQ4"
+#define API_KEY "AIzaSyCeNCQX-xO73POz4HZJXgLWGxQ4"
 #define USER_EMAIL "sayeeduits1@gmail.com"
 #define USER_PASSWORD "012315464"
 #define DATABASE_URL "neo-6m-gps-testing-402b3-default-rtdb.firebaseio.com/"
