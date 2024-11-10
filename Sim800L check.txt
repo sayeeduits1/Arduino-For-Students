@@ -1,0 +1,37 @@
+#include <SoftwareSerial.h>
+
+#define SIM800_TX 2  // Arduino TX (to Sim800L RX)
+#define SIM800_RX 3  // Arduino RX (to Sim800L TX)
+
+SoftwareSerial sim800l(SIM800_RX, SIM800_TX);
+
+void setup() {
+  Serial.begin(9600);        // Initialize Serial Monitor for debugging
+  sim800l.begin(9600);       // Initialize Sim800L serial connection
+  Serial.println("Starting Sim800L call test...");
+
+  delay(1000);               // Wait for Sim800L to be ready
+
+  // Command to dial the number +8801715772733
+  sim800l.println("ATD+8801715772733;");  
+  Serial.println("Dialing +8801715772733...");
+}
+
+void loop() {
+  // Check for and print any responses from the Sim800L module
+  if (sim800l.available()) {
+    String response = sim800l.readString();
+    Serial.println("Sim800L Response: " + response);
+  }
+
+  // Allow input from Serial Monitor to control call actions
+  if (Serial.available()) {
+    char command = Serial.read();
+    
+    // End call if 'h' is typed in Serial Monitor
+    if (command == 'h') {
+      sim800l.println("ATH");  // Hang up the call
+      Serial.println("Ending call...");
+    }
+  }
+}
