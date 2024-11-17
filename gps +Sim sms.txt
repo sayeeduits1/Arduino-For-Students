@@ -1,0 +1,49 @@
+#include <SoftwareSerial.h>
+#include <TinyGPS++.h>
+
+SoftwareSerial SIM800(10, 9); // SIM800L RX, TX
+SoftwareSerial GPS(3, 2);    // GPS TX, RX
+
+TinyGPSPlus gps;
+
+void setup() {
+  Serial.begin(115200);
+  SIM800.begin(9600);
+  GPS.begin(9600);
+
+  delay(1000);
+  SIM800.println("AT"); // মডিউল ঠিকমতো কাজ করছে কিনা চেক করুন
+  delay(1000);
+  SIM800.println("AT+CMGF=1"); // Text mode চালু
+  delay(1000);
+  Serial.println("GPS Tracker Ready");
+}
+
+void loop() {
+  while (GPS.available()) {
+    if (gps.encode(GPS.read())) {
+      if (gps.location.isUpdated()) {
+        String lat = String(gps.location.lat(), 6);
+        String lng = String(gps.location.lng(), 6);
+
+        // যখন মেসেজ আসে তখন অবস্থান পাঠান
+        if (SIM800.available()) {
+          String incoming = SIM800.readString();
+          if (incoming.indexOf("LOCATION") >= 0) {
+            sendLocation(lat, lng);
+          }
+        }
+      }
+    }
+  }
+}
+
+void sendLocation(String lat, String lng) {
+  String message = "http://maps.google.com/?q=" + lat + "," + lng;
+ SIM800.println("AT+CMGS=\"+8801670624395\""); // আপনার মোবাইল নম্বর আপনার মোবাইল নম্বর লিখুন
+  delay(1000);
+  SIM800.println(message);
+  delay(100);
+  SIM800.write(26); // CTRL+Z টিপে মেসেজ পাঠান
+  delay(1000);
+}
