@@ -1,0 +1,10 @@
+function startCmd(cmd,btn){
+  document.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  fetch("/control?State="+cmd);
+}
+
+function stopCmd(){
+  document.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+  fetch("/control?State=S");
+}
